@@ -1,0 +1,8 @@
+change = 1
+depotStats = revs(0R/0F/0B/0D/0C/0U); changes(0T/0C/0:0L/0:0LC/0:0F/0:0FC); lastCalculated(1781334526);#abc/def=ghi
+graphDepotRefcountState = 0
+journal = 4
+lastCheckpointAction = 1781337732 (2026/06/13 09:02:12 +0100 BST) checkpoint completed
+maxCommitChange = 1
+repltest = 123
+upgrade = 60

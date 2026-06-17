@@ -1,0 +1,3 @@
+abc123def4567890 //depot/main/big.bin#3 2026/06/13 09:30:00
+deadbeefcafebabe //depot/main/other.bin#1 2026/06/13 09:30:01 failed transfer (5 attempts)
+0011223344556677 //depot/main/third.bin#2 2026/06/13 09:30:02

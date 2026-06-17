@@ -1,0 +1,4 @@
+Current replica journal state is:	Journal 12, Sequence 4521.
+Current master journal state is:	Journal 12, Sequence 5000.
+The statefile was last modified at:	2026/06/13 09:00:01.
+The replica server time is currently:	2026/06/13 09:00:01 +0000 UTC.

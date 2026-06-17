@@ -1,0 +1,16 @@
+User name: claude
+Client name: ws
+Client host: lab01
+Client root: /tmp/ws
+Current directory: /tmp/ws
+Peer address: 127.0.0.1:54321
+Client address: 127.0.0.1
+Server address: 127.0.0.1:1666
+Server root: /var/p4/dbfiles
+Server date: 2026/06/13 09:00:00 +0000 UTC
+Server uptime: 12:34:56
+Server version: P4D/LINUX26X86_64/2026.1/2589505 (2026/03/15)
+ServerID: master.1
+Server services: standard
+Server license: none
+Case Handling: sensitive

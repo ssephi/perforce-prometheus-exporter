@@ -1,0 +1,120 @@
+groups:
+  - name: perforce-availability
+    interval: 30s
+    rules:
+      - alert: PerforceTargetDown
+        expr: perforce_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Perforce target {{ $labels.target }} is down"
+          description: |
+            `p4 info` against target `{{ $labels.target }}` has been failing
+            for at least 1 minute. Server may be stopped, unreachable, or
+            rejecting auth.
+
+      - alert: PerforceScrapeDown
+        # The exporter itself is unreachable.
+        expr: up{job="perforce"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Perforce exporter is unreachable"
+          description: "Prometheus has been unable to scrape the perforce exporter for 2m."
+
+  - name: perforce-replication
+    interval: 30s
+    rules:
+      - alert: PerforceReplicationStalled
+        # Sequence is behind and not advancing toward master.
+        expr: perforce_replication_sequence_lag > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Replica {{ $labels.target }} is behind master"
+          description: |
+            Replica is {{ $value | humanize1024 }}B behind master and has not
+            caught up for 5 minutes.
+
+      - alert: PerforceReplicationJournalLag
+        expr: perforce_replication_journal_lag > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Replica {{ $labels.target }} journal number lags master"
+          description: |
+            Replica journal is {{ $value }} behind master for 10m. This usually
+            indicates the replica missed a journal rotation.
+
+      - alert: PerforceReplicaStateFileStale
+        # statefile timestamp not advancing means the replica is not pulling.
+        expr: time() - perforce_replication_statefile_modified_timestamp_seconds > 300
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Replica {{ $labels.target }} statefile not updating"
+          description: |
+            The replica statefile has not been touched in
+            {{ $value | humanizeDuration }}. The pull thread may be stuck.
+
+  - name: perforce-archive
+    interval: 30s
+    rules:
+      - alert: PerforceArchiveReplicationUnhealthy
+        expr: perforce_archive_replication_healthy == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Archive replication unhealthy on {{ $labels.target }}"
+          description: |
+            `p4 pull -ls`/`-l` reported a failed transfer or the commands
+            themselves failed for at least 5 minutes.
+
+      - alert: PerforceArchiveFailedTransfers
+        expr: perforce_archive_pull_failed_transfers > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Failed archive transfers queued on {{ $labels.target }}"
+          description: |
+            {{ $value }} transfer(s) flagged as failed in `p4 pull -l` for 5m.
+
+  - name: perforce-housekeeping
+    interval: 1m
+    rules:
+      - alert: PerforceCheckpointStale
+        # 24h since last checkpoint = warning; 7d = critical (separate rule).
+        expr: perforce_checkpoint_age_seconds > 86400
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Checkpoint older than 24h on {{ $labels.target }}"
+          description: "Last checkpoint was {{ $value | humanizeDuration }} ago."
+
+      - alert: PerforceCheckpointVeryStale
+        expr: perforce_checkpoint_age_seconds > 7 * 86400
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Checkpoint older than 7 days on {{ $labels.target }}"
+          description: "Last checkpoint was {{ $value | humanizeDuration }} ago."
+
+      - alert: PerforceCommandErrors
+        expr: rate(perforce_command_errors_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Errors running `p4 {{ $labels.command }}` on {{ $labels.target }}"
+          description: |
+            Error type `{{ $labels.error_type }}` occurring at
+            {{ $value | humanize }}/s.

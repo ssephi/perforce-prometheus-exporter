@@ -1,0 +1,76 @@
+# Local monitoring stack for the perforce exporter.
+#
+# The exporter runs in its own container with the p4 CLI baked in. It
+# reaches the host's p4d processes via host.docker.internal, which works
+# out of the box on Docker Desktop (macOS/Windows) and on Linux thanks to
+# the host-gateway extra_hosts mapping.
+
+services:
+  exporter:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: perforce-exporter:local
+    container_name: perforce-exporter
+    ports:
+      - "9117:9117"
+    environment:
+      PERFORCE_TARGETS: "primary=host.docker.internal:1666,replica=host.docker.internal:1667"
+      EXPORTER_PORT: "9117"
+      P4_BIN: p4
+      P4_TIMEOUT_SECONDS: "10"
+      # Identity the container will use when running p4 commands. The
+      # default p4 ticket location inside the container is /root/.p4tickets
+      # (the container process runs as root). Mount your host ticket file
+      # over that path below.
+      P4USER: "${P4USER:-${USER}}"
+    volumes:
+      # Provide a valid ticket so commands requiring auth (p4 counters,
+      # p4 pull -lj, p4 pull -l/-ls) succeed. Mount read-only.
+      - ${HOME}/.p4tickets:/root/.p4tickets:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/rules:/etc/prometheus/rules:ro
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+      - "--web.enable-lifecycle"
+      # delete_series / clean_tombstones for evicting stale series when
+      # scrape targets move; disable in any prod-ish deployment.
+      - "--web.enable-admin-api"
+    depends_on:
+      - exporter
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  prometheus-data:
+  grafana-data:

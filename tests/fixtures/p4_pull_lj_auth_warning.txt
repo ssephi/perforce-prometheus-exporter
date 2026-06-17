@@ -1,0 +1,4 @@
+Perforce password (P4PASSWD) invalid or unset.
+Current replica journal state is:	Journal 8, Sequence 100.
+Current master journal state is:	Journal 8, Sequence 100.
+The statefile was last modified at:	2026/06/13 09:00:01.
