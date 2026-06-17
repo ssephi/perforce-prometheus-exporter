@@ -9,6 +9,9 @@ project_name: perforce-exporter
 before:
   hooks:
     - go mod tidy
+    # Stage the repo-root LICENSE into go/ so the archive step can pick it
+    # up; GoReleaser's file globber stumbles on `..` paths.
+    - cp ../LICENSE LICENSE
 
 builds:
   - id: perforce-exporter
@@ -43,7 +46,7 @@ archives:
         formats: [zip]
     files:
       - README.md
-      - ../LICENSE
+      - LICENSE
 
 checksum:
   name_template: "checksums.txt"

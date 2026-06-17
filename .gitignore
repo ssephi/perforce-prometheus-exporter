@@ -8,6 +8,8 @@ __pycache__/
 # Go
 go/perforce-exporter
 go/dist/
+# Staged at release time by the goreleaser `before:` hook.
+go/LICENSE
 
 # Editor / OS
 .DS_Store
