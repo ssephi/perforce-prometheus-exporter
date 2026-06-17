@@ -20,6 +20,14 @@ import (
 	"github.com/ssephi/perforce-prom-exporter/internal/config"
 )
 
+// Populated by `go build -ldflags="-X main.version=…"` at release time
+// (GoReleaser fills these in). Default to "dev" for plain `go build`.
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
+
 func main() {
 	if code := run(); code != 0 {
 		os.Exit(code)
@@ -28,6 +36,17 @@ func main() {
 
 func run() int {
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+
+	// `--version` is the only flag we handle by hand. Anything else falls
+	// through to the env-driven config path so behaviour matches the
+	// Python exporter (no flag surface).
+	for _, a := range os.Args[1:] {
+		if a == "--version" || a == "-v" {
+			fmt.Printf("perforce-exporter %s (commit %s, built %s)\n", version, commit, date)
+			return 0
+		}
+	}
+	log.Printf("perforce-exporter version=%s commit=%s built=%s", version, commit, date)
 
 	cfg, err := config.Load(nil)
 	if err != nil {

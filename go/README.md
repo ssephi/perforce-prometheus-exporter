@@ -59,6 +59,30 @@ go/
 go test ./...
 ```
 
+## Cutting a release
+
+GoReleaser config lives at `.goreleaser.yaml`; the workflow is at
+`../.github/workflows/release.yml` and fires on any `v*` tag push.
+
+```sh
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+That builds binaries for linux/{amd64,arm64}, darwin/arm64, windows/amd64,
+tars/zips them with `README.md` and `LICENSE` alongside, generates a
+`checksums.txt`, and publishes a GitHub Release with auto-generated notes.
+
+To dry-run locally without publishing (requires
+`brew install goreleaser`):
+
+```sh
+goreleaser release --snapshot --clean
+```
+
+Built binaries print `--version`, with the tag, short SHA and build date
+baked in via `-ldflags="-X main.version=…"`.
+
 The fixture files under `internal/parsers/testdata/` are the same captured
 `p4 …` outputs the Python tests use, copied verbatim so the two
 implementations parse identical inputs.

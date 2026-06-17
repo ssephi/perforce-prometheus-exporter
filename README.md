@@ -104,6 +104,11 @@ cd go && make dist
 scp dist/perforce-exporter-linux-amd64 admin@p4-primary:/usr/local/bin/perforce-exporter
 ```
 
+Or grab a pre-built binary from the
+[Releases page](https://github.com/ssephi/perforce-prometheus-exporter/releases) —
+each `v*` tag triggers GoReleaser to publish archives for linux
+(amd64/arm64), darwin/arm64, and windows/amd64 with a `checksums.txt`.
+
 Point Prometheus at `:9117/metrics`; the dashboard JSON and alert rules
 in this repo work unchanged.
 

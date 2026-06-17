@@ -1,0 +1,76 @@
+# GoReleaser config for perforce-exporter.
+#
+# Triggered by .github/workflows/release.yml on push of a `v*` tag.
+# Run locally with: cd go && goreleaser release --snapshot --clean
+
+version: 2
+project_name: perforce-exporter
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: perforce-exporter
+    main: ./cmd/perforce-exporter
+    binary: perforce-exporter
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.ShortCommit}}
+      - -X main.date={{.Date}}
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    # windows/arm64 has no p4 binary published by Perforce, so a build of
+    # the exporter for it would have nowhere to call out to.
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+archives:
+  - id: default
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_
+      {{- .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else }}{{ .Arch }}{{ end }}
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - README.md
+      - ../LICENSE
+
+checksum:
+  name_template: "checksums.txt"
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "Merge pull request"
+
+release:
+  # GitHub release notes header — keeps the install recipe one click away
+  # from the download list.
+  header: |
+    ## perforce-exporter {{ .Tag }}
+
+    Static Go binary of the Perforce Prometheus exporter. Drop it next to
+    `p4` on your Perforce host; no runtime to install.
+
+    ```sh
+    curl -L -o perforce-exporter \
+      https://github.com/ssephi/perforce-prometheus-exporter/releases/download/{{ .Tag }}/perforce-exporter_{{ .Version }}_linux_x86_64.tar.gz
+    ```
